@@ -2,7 +2,8 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { hasMaterials, normalizeItems, cleanOcrText } from './src/logic.js';
+import { hasMaterials, normalizeItems } from './src/logic.js';
+import { recognizeDocument } from './src/ocr.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 try {
@@ -25,14 +26,6 @@ async function body(req, limit = 8_000_000) {
     if (value.length > limit) throw new Error('请求过大');
   }
   return JSON.parse(value);
-}
-async function ocr(image) {
-  const { createWorker } = await import('tesseract.js');
-  const worker = await createWorker('chi_sim+eng');
-  try {
-    const result = await worker.recognize(Buffer.from(image, 'base64'));
-    return cleanOcrText(result.data.text);
-  } finally { await worker.terminate(); }
 }
 async function analyze(text) {
   const key = process.env.DEEPSEEK_API_KEY;
@@ -58,8 +51,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && req.url === '/api/ocr') {
       const input = await body(req);
       if (!/^data:image\/(png|jpeg|webp);base64,/.test(input.image ?? '')) return send(res, 400, { error: '图片格式不支持' });
-      const text = await ocr(input.image.split(',')[1]);
-      return send(res, 200, { text, suggested: hasMaterials(text) });
+      const result = await recognizeDocument(Buffer.from(input.image.split(',')[1], 'base64'));
+      return send(res, 200, { ...result, suggested: hasMaterials(result.text) });
     }
     if (req.method === 'POST' && req.url === '/api/analyze') {
       const input = await body(req, 100_000);

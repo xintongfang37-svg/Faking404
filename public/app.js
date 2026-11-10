@@ -4,7 +4,7 @@ function status(message) { $('status').textContent = message; }
 function reset() {
   generation++; phase = 'idle'; items = []; selected = 0; lastImage = null;
   $('proposal').hidden = $('results').hidden = $('retry').hidden = true;
-  $('source').value = ''; status('待扫描'); $('hint').textContent = '等待扫描';
+  $('source').value = ''; $('photo').hidden = true; $('photo').removeAttribute('src'); status('待扫描'); $('hint').textContent = '等待扫描';
 }
 async function post(url, data) {
   const response = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
@@ -14,13 +14,15 @@ async function post(url, data) {
 }
 async function recognize(image) {
   const current = ++generation; lastImage = image; phase = 'recognizing';
+  $('photo').src = image; $('photo').hidden = false;
   $('proposal').hidden = $('results').hidden = $('retry').hidden = true; status('本地识别中…');
   const started = performance.now();
   try {
     const result = await post('/api/ocr', { image });
     if (current !== generation) return;
     $('source').value = result.text;
-    $('hint').textContent = `OCR 用时 ${((performance.now()-started)/1000).toFixed(1)} 秒；可先修正文字。`;
+    const quality = result.confidence < 70 ? '识别可信度偏低，请重新对焦拍摄或修正文字。' : '请核对并修正文字。';
+    $('hint').textContent = `OCR 用时 ${((performance.now()-started)/1000).toFixed(1)} 秒；${quality}`;
     phase = 'ready'; status(result.text ? '已识别，可检查文字' : '未识别到文字，请重拍');
     $('proposal').hidden = !result.suggested;
     if (!result.text) $('retry').hidden = false;
@@ -34,7 +36,7 @@ $('file').onchange = event => readFile(event.target.files[0]);
 $('camera').onclick = async () => {
   try {
     stream?.getTracks().forEach(track => track.stop());
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' }, width: { ideal: 2560 }, height: { ideal: 1920 } }, audio: false });
     $('video').srcObject=stream; $('video').hidden=false;
     await $('video').play(); $('capture').disabled=false;
   }
@@ -43,7 +45,7 @@ $('camera').onclick = async () => {
 $('capture').onclick = () => {
   const video=$('video'), canvas=$('canvas');
   if (!video.videoWidth || !video.videoHeight) return status('摄像头尚未准备好，请稍后重试');
-  const scale=Math.min(1,1600/video.videoWidth); canvas.width=Math.round(video.videoWidth*scale); canvas.height=Math.round(video.videoHeight*scale);
+  const scale=Math.min(1,2800/Math.max(video.videoWidth,video.videoHeight)); canvas.width=Math.round(video.videoWidth*scale); canvas.height=Math.round(video.videoHeight*scale);
   canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height); recognize(canvas.toDataURL('image/jpeg',.9));
 };
 $('source').oninput = () => { if (phase !== 'analyzing' && phase !== 'checking') { phase='ready'; $('proposal').hidden = $('source').value.trim().length < 15; status('文字已修改，请检查后确认'); } };
