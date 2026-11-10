@@ -15,6 +15,18 @@ npm start
 
 浏览器打开 `http://127.0.0.1:3000`。首次 OCR 运行时，Tesseract.js 需要下载中文识别模型并缓存，可能较慢。DeepSeek 只有在用户点击“确认并调用 DeepSeek”后才收到识别文字。也可以粘贴或修改识别文字，便于处理反光、模糊输入。
 
+## Android 手机通过 USB 使用
+
+手机开启 USB 调试并授权电脑后，保持电脑上的 `npm start` 运行，再在电脑终端执行：
+
+```powershell
+adb devices
+adb reverse tcp:3000 tcp:3000
+adb shell am start -a android.intent.action.VIEW -d http://127.0.0.1:3000/
+```
+
+在手机浏览器允许摄像头权限，点击“开启后置摄像头”，对准通知后点击“拍照识别”。页面只请求后置摄像头，无法调用时会报错而不会切到前置。识别仍在电脑上运行，USB 拔掉或电脑服务关闭后手机页面无法继续工作；这不是离线手机端 OCR。若 `adb` 不在 PATH 中，请使用 Android SDK Platform Tools 中的 `adb` 完整路径。
+
 ## 演示流程
 
 1. 用 `samples/` 中的通知制作清晰图片，选照片或使用摄像头扫描。

@@ -32,12 +32,19 @@ function readFile(file) {
 }
 $('file').onchange = event => readFile(event.target.files[0]);
 $('camera').onclick = async () => {
-  try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); $('video').srcObject=stream; $('video').hidden=false; $('capture').disabled=false; }
-  catch (error) { status(`摄像头不可用：${error.message}`); }
+  try {
+    stream?.getTracks().forEach(track => track.stop());
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    $('video').srcObject=stream; $('video').hidden=false;
+    await $('video').play(); $('capture').disabled=false;
+  }
+  catch (error) { status(`后置摄像头不可用：${error.message}`); }
 };
 $('capture').onclick = () => {
-  const video=$('video'), canvas=$('canvas'); canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-  canvas.getContext('2d').drawImage(video,0,0); recognize(canvas.toDataURL('image/jpeg',.9));
+  const video=$('video'), canvas=$('canvas');
+  if (!video.videoWidth || !video.videoHeight) return status('摄像头尚未准备好，请稍后重试');
+  const scale=Math.min(1,1600/video.videoWidth); canvas.width=Math.round(video.videoWidth*scale); canvas.height=Math.round(video.videoHeight*scale);
+  canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height); recognize(canvas.toDataURL('image/jpeg',.9));
 };
 $('source').oninput = () => { if (phase !== 'analyzing' && phase !== 'checking') { phase='ready'; $('proposal').hidden = $('source').value.trim().length < 15; status('文字已修改，请检查后确认'); } };
 $('dismiss').onclick = () => { $('proposal').hidden=true; status('已忽略本次提示'); };
