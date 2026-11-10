@@ -15,6 +15,15 @@ npm start
 
 浏览器打开 `http://127.0.0.1:3000`。首次 OCR 运行时，Tesseract.js 需要下载中文识别模型并缓存，可能较慢。DeepSeek 只有在用户点击“确认并调用 DeepSeek”后才收到识别文字。也可以粘贴或修改识别文字，便于处理反光、模糊输入。
 
+为提高中文书页、表格等复杂版面的识别质量，建议在本机安装 RapidOCR（当前电脑已安装）：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-ocr.txt
+```
+
+安装后服务优先使用本机 RapidOCR；未安装时回退到 Tesseract。首次启动 RapidOCR 会加载本地模型，可能较慢。图片只传至这台电脑的本机服务；点击确认后才会将识别文字发给 DeepSeek。复杂图片仍应核对识别结果，尤其是数字、百分比和表格列的对应关系。
+
 ## Android 手机通过 USB 使用
 
 手机开启 USB 调试并授权电脑后，保持电脑上的 `npm start` 运行，再在电脑终端执行：

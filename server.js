@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hasMaterials, normalizeItems } from './src/logic.js';
-import { recognizeDocument } from './src/ocr.js';
+import { recognizeDocument } from './src/document-ocr.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 try {

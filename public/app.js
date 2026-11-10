@@ -22,7 +22,7 @@ async function recognize(image) {
     if (current !== generation) return;
     $('source').value = result.text;
     const quality = result.confidence < 70 ? '识别可信度偏低，请重新对焦拍摄或修正文字。' : '请核对并修正文字。';
-    $('hint').textContent = `OCR 用时 ${((performance.now()-started)/1000).toFixed(1)} 秒；${quality}`;
+    $('hint').textContent = `OCR 用时 ${((performance.now()-started)/1000).toFixed(1)} 秒（${result.engine}）；${quality}`;
     phase = 'ready'; status(result.text ? '已识别，可检查文字' : '未识别到文字，请重拍');
     $('proposal').hidden = !result.suggested;
     if (!result.text) $('retry').hidden = false;
