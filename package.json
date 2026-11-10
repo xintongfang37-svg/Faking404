@@ -1,0 +1,9 @@
+{
+  "name": "context-assistant-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {"start": "node server.js", "test": "node --test"},
+  "dependencies": {"tesseract.js": "^6.0.1"},
+  "engines": {"node": ">=20"}
+}
